@@ -1,0 +1,68 @@
+Sub ExtractTabsFromMultipleWorkbooks()
+
+    Dim folderPath As String, outputFolderPath As String
+    Dim fileName As String
+    Dim sourceWorkbook As Workbook, destinationWorkbook As Workbook
+    Dim ws As Worksheet
+
+    folderPath = "C:\Users\cyang\Downloads\test\" ' Source folder
+    outputFolderPath = folderPath & "NewWorkbooks\" ' Output folder
+
+    ' Create the output folder if it does not exist
+    If Dir(outputFolderPath, vbDirectory) = "" Then
+        MkDir outputFolderPath
+    End If
+
+    Dim sheetsToCopy As Variant
+    sheetsToCopy = Array("Sheet1", "Sheet3") ' Modify as needed
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+
+    fileName = Dir(folderPath & "*.xls*")
+    Do While fileName <> ""
+        Set sourceWorkbook = Workbooks.Open(folderPath & fileName)
+        Set destinationWorkbook = Workbooks.Add
+
+        For Each ws In sourceWorkbook.Sheets
+            If Not IsError(Application.Match(ws.Name, sheetsToCopy, 0)) Then
+                ws.Copy After:=destinationWorkbook.Sheets(destinationWorkbook.Sheets.Count)
+            End If
+        Next ws
+
+        On Error Resume Next
+        destinationWorkbook.Sheets("Sheet1").Delete
+        On Error GoTo 0
+
+        ' Generate a valid file name
+        Dim outputFileName As String
+        outputFileName = outputFolderPath & CleanFileName(Replace(sourceWorkbook.Name, ".xlsx", "") & "_Modified.xlsx")
+
+        destinationWorkbook.SaveAs outputFileName
+        destinationWorkbook.Close
+        sourceWorkbook.Close False
+
+        fileName = Dir()
+    Loop
+
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+
+End Sub
+
+' Function to clean and shorten file names
+Function CleanFileName(ByVal fileName As String) As String
+    Dim invalidChars As String
+    invalidChars = "\/:*?""<>|"
+
+    For i = 1 To Len(invalidChars)
+        fileName = Replace(fileName, Mid(invalidChars, i, 1), "")
+    Next i
+
+    ' Shorten the file name if it's too long
+    If Len(fileName) > 250 Then
+        fileName = Left(fileName, 250)
+    End If
+
+    CleanFileName = fileName
+End Function
