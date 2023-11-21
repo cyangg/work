@@ -5,23 +5,19 @@ Sub ExtractTabsFromMultipleWorkbooks()
     Dim sourceWorkbook As Workbook, destinationWorkbook As Workbook
     Dim ws As Worksheet
 
-    ' Folder paths
     folderPath = "C:\Users\cyang\Downloads\test\" ' Source folder - change this to your folder
     outputFolderPath = folderPath & "NewWorkbooks\" ' Output folder - change this to your desired output folder
 
-    ' Create the output folder if it does not exist
     If Dir(outputFolderPath, vbDirectory) = "" Then
         MkDir outputFolderPath
     End If
 
-    ' Sheets to copy
     Dim sheetsToCopy As Variant
-    sheetsToCopy = Array("er", "et") ' Modify the sheet names as needed
+    sheetsToCopy = Array("Sheet1", "Sheet3") ' Modify the sheet names as needed
 
     Application.ScreenUpdating = False
     Application.DisplayAlerts = False
 
-    ' Process each file in the folder
     fileName = Dir(folderPath & "*.xls*")
     Do While fileName <> ""
         Set sourceWorkbook = Workbooks.Open(folderPath & fileName)
@@ -30,27 +26,22 @@ Sub ExtractTabsFromMultipleWorkbooks()
         For Each ws In sourceWorkbook.Sheets
             If Not IsError(Application.Match(ws.Name, sheetsToCopy, 0)) Then
                 ws.Copy After:=destinationWorkbook.Sheets(destinationWorkbook.Sheets.Count)
-                ' Reset tab color to no color in the source workbook
                 ws.Tab.Color = xlNone
             End If
         Next ws
 
-        ' Delete the default "Sheet1" in the new workbook
         On Error Resume Next
         destinationWorkbook.Sheets("Sheet1").Delete
         On Error GoTo 0
 
-        ' Save and close the new workbook
         Dim outputFileName As String
-        outputFileName = outputFolderPath & CleanFileName(Replace(sourceWorkbook.Name, ".xlsx", "") & "_Modified.xlsx")
+        outputFileName = outputFolderPath & CleanFileName(GetBaseName(fileName) & " - Financial Reports Oct 2023.xlsx")
         destinationWorkbook.SaveAs outputFileName
         destinationWorkbook.Close
 
-        ' Save and close the source workbook
         sourceWorkbook.Save
         sourceWorkbook.Close False
 
-        ' Get the next file
         fileName = Dir()
     Loop
 
@@ -59,7 +50,6 @@ Sub ExtractTabsFromMultipleWorkbooks()
 
 End Sub
 
-' Function to clean and shorten file names
 Function CleanFileName(ByVal fileName As String) As String
     Dim invalidChars As String
     invalidChars = "\/:*?""<>|"
@@ -68,12 +58,21 @@ Function CleanFileName(ByVal fileName As String) As String
         fileName = Replace(fileName, Mid(invalidChars, i, 1), "")
     Next i
 
-    ' Shorten the file name if it's too long
     If Len(fileName) > 250 Then
         fileName = Left(fileName, 250)
     End If
 
     CleanFileName = fileName
+End Function
+
+Function GetBaseName(ByVal fileName As String) As String
+    Dim splitPos As Integer
+    splitPos = InStr(fileName, "-")
+    If splitPos > 0 Then
+        GetBaseName = Trim(Left(fileName, splitPos - 1))
+    Else
+        GetBaseName = Trim(fileName)
+    End If
 End Function
 
 
