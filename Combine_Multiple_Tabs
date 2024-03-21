@@ -17,7 +17,7 @@ Sub MergeSummaryTablesFromFolder()
     Set targetWorkbook = Workbooks.Add
     
     ' Start looping through all files in the folder matching the Excel file pattern
-    fileName = Dir(folderPath & "*.xlsx*")
+    fileName = Dir(folderPath & "*.xlsm*")
     
     Do While fileName <> ""
         ' Check the file extension
