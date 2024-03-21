@@ -1,0 +1,86 @@
+Sub MergeSummaryTablesFromFolder()
+    Dim ws As Worksheet
+    Dim targetWorkbook As Workbook
+    Dim sourceWorkbook As Workbook
+    Dim folderPath As String
+    Dim fileName As String
+    Dim sheetName As String
+    Dim fileExtension As String
+    
+    ' Specify the folder path
+    folderPath = "D:\aws\"
+    
+    ' Check if the path ends with a backslash
+    If Right(folderPath, 1) <> "\" Then folderPath = folderPath & "\"
+    
+    ' Create a new workbook as the merge target
+    Set targetWorkbook = Workbooks.Add
+    
+    ' Start looping through all files in the folder matching the Excel file pattern
+    fileName = Dir(folderPath & "*.xlsx*")
+    
+    Do While fileName <> ""
+        ' Check the file extension
+        fileExtension = Right(fileName, 5)
+        If fileExtension = ".xlsx" Or fileExtension = "xlsm" Then
+            ' Open the source workbook
+            Set sourceWorkbook = Workbooks.Open(folderPath & fileName)
+            
+            ' Check if the "Summary table list" worksheet exists
+            On Error Resume Next
+            Set ws = sourceWorkbook.Sheets("Summary table list")
+            If Not ws Is Nothing Then
+                ' Extract the content within parentheses from the file name
+                sheetName = ExtractNameFromFileName(fileName)
+                
+                ' Copy the worksheet to the target workbook and rename it
+                ws.Copy After:=targetWorkbook.Sheets(targetWorkbook.Sheets.Count)
+                targetWorkbook.Sheets(targetWorkbook.Sheets.Count).Name = sheetName
+                
+                ' Remove formulas, leaving only the values
+                RemoveFormulas targetWorkbook.Sheets(sheetName)
+                
+                Set ws = Nothing
+            End If
+            On Error GoTo 0
+            ' Close the source workbook without saving changes
+            sourceWorkbook.Close False
+        End If
+        ' Get the next file name
+        fileName = Dir()
+    Loop
+    
+    ' Save the merged workbook
+    targetWorkbook.SaveAs folderPath & "SummaryOutput.xlsx"
+    MsgBox "Merge complete! File saved at: " & folderPath & "SummaryOutput.xlsx"
+End Sub
+
+Function ExtractNameFromFileName(fileName As String) As String
+    Dim openPos As Integer
+    Dim closePos As Integer
+    Dim midString As String
+    
+    ' Find the positions of the last "(" and the last ")" in the file name
+    openPos = InStrRev(fileName, "(")
+    closePos = InStrRev(fileName, ")")
+    ' Extract the string between them
+    If openPos > 0 And closePos > 0 Then
+        midString = Mid(fileName, openPos + 1, closePos - openPos - 1)
+    Else
+        midString = "Unnamed"
+    End If
+    
+    ' Return the extracted string
+    ExtractNameFromFileName = midString
+End Function
+
+Sub RemoveFormulas(sheet As Worksheet)
+    Dim rng As Range
+    ' Iterate through all used cells in the sheet
+    For Each rng In sheet.UsedRange
+        ' If the cell contains a formula, replace it with its value
+        If rng.HasFormula Then
+            rng.Value = rng.Value
+        End If
+    Next rng
+End Sub
