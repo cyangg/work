@@ -9,15 +9,16 @@ Sub ExportPropertiesToExistingFiles()
     Dim currentProperty As Integer
     Dim folderPath As String
     Dim fileToOpen As String
+    Dim targetSheet As Worksheet
     
     ' Set the folder path where your files are located
-    folderPath = "C:\Your\Directory\Path\"  ' Modify this path to the correct folder
+    folderPath = "E:\AY work\"  ' Modify this path to the correct folder
 
     ' Set the current worksheet
     Set ws = ThisWorkbook.Sheets(1) ' Assuming your data is in the first worksheet
 
     ' Loop through properties 16 to 30
-    For currentProperty = 16 To 30
+    For currentProperty = 19 To 30
         ' Construct the property name
         propertyName = "inrot" & currentProperty
         
@@ -39,11 +40,22 @@ Sub ExportPropertiesToExistingFiles()
             ' Open the target workbook
             Set targetWb = Workbooks.Open(filePath)
             
-            ' Add a new worksheet in the target workbook for the current property
-            With targetWb.Sheets.Add(After:=targetWb.Sheets(targetWb.Sheets.Count))
-                rng.Copy Destination:=.Range("A1")
-                .Name = "PO-Contract" ' Rename the new tab to 'PO-Contract'
-            End With
+            ' Check if the "PO-Contract" sheet already exists
+            On Error Resume Next
+            Set targetSheet = targetWb.Sheets("PO-Contract")
+            On Error GoTo 0
+            
+            If Not targetSheet Is Nothing Then
+                ' If the "PO-Contract" sheet exists, clear its contents
+                targetSheet.Cells.Clear
+            Else
+                ' If the sheet does not exist, create a new one
+                Set targetSheet = targetWb.Sheets.Add(After:=targetWb.Sheets(targetWb.Sheets.Count))
+                targetSheet.Name = "PO-Contract"
+            End If
+            
+            ' Copy the new data into the "PO-Contract" sheet
+            rng.Copy Destination:=targetSheet.Range("A1")
             
             ' Save and close the target workbook
             targetWb.Save
@@ -55,3 +67,4 @@ Sub ExportPropertiesToExistingFiles()
     
     MsgBox "Properties have been successfully exported to their respective files!"
 End Sub
+
