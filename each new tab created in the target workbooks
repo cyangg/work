@@ -12,13 +12,13 @@ Sub ExportPropertiesToExistingFiles()
     Dim targetSheet As Worksheet
     
     ' Set the folder path where your files are located
-    folderPath = "E:\AY work\"  ' Modify this path to the correct folder
+    folderPath = "C:\Your\Directory\Path\"  ' Modify this path to the correct folder
 
     ' Set the current worksheet
     Set ws = ThisWorkbook.Sheets(1) ' Assuming your data is in the first worksheet
 
     ' Loop through properties 16 to 30
-    For currentProperty = 19 To 30
+    For currentProperty = 16 To 30
         ' Construct the property name
         propertyName = "inrot" & currentProperty
         
@@ -46,15 +46,15 @@ Sub ExportPropertiesToExistingFiles()
             On Error GoTo 0
             
             If Not targetSheet Is Nothing Then
-                ' If the "PO-Contract" sheet exists, clear its contents
-                targetSheet.Cells.Clear
+                ' If the "PO-Contract" sheet exists, clear contents in columns A to L
+                targetSheet.Range("A:L").ClearContents
             Else
                 ' If the sheet does not exist, create a new one
                 Set targetSheet = targetWb.Sheets.Add(After:=targetWb.Sheets(targetWb.Sheets.Count))
                 targetSheet.Name = "PO-Contract"
             End If
             
-            ' Copy the new data into the "PO-Contract" sheet
+            ' Copy the new data into the "PO-Contract" sheet starting at cell A1
             rng.Copy Destination:=targetSheet.Range("A1")
             
             ' Save and close the target workbook
@@ -67,4 +67,5 @@ Sub ExportPropertiesToExistingFiles()
     
     MsgBox "Properties have been successfully exported to their respective files!"
 End Sub
+
 
