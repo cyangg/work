@@ -1,0 +1,57 @@
+Sub ExportPropertiesToExistingFiles()
+    Dim ws As Worksheet
+    Dim startRow As Long
+    Dim endRow As Long
+    Dim rng As Range
+    Dim propertyName As String
+    Dim filePath As String
+    Dim targetWb As Workbook
+    Dim currentProperty As Integer
+    Dim folderPath As String
+    Dim fileToOpen As String
+    
+    ' Set the folder path where your files are located
+    folderPath = "C:\Your\Directory\Path\"  ' Modify this path to the correct folder
+
+    ' Set the current worksheet
+    Set ws = ThisWorkbook.Sheets(1) ' Assuming your data is in the first worksheet
+
+    ' Loop through properties 16 to 30
+    For currentProperty = 16 To 30
+        ' Construct the property name
+        propertyName = "inrot" & currentProperty
+        
+        ' Find the start and end row for the current property data
+        startRow = ws.Cells.Find("Property: " & propertyName, LookAt:=xlWhole).Row
+        endRow = ws.Cells.Find("Total (" & propertyName & ")", LookAt:=xlWhole).Row
+        
+        ' Define the range to copy
+        Set rng = ws.Rows(startRow & ":" & endRow)
+        
+        ' Find the correct file based on the pattern "inrot{property number}*"
+        fileToOpen = Dir(folderPath & propertyName & "*")
+        
+        ' Construct the full file path
+        filePath = folderPath & fileToOpen
+        
+        ' Check if the file exists
+        If fileToOpen <> "" Then
+            ' Open the target workbook
+            Set targetWb = Workbooks.Open(filePath)
+            
+            ' Add a new worksheet in the target workbook for the current property
+            With targetWb.Sheets.Add(After:=targetWb.Sheets(targetWb.Sheets.Count))
+                rng.Copy Destination:=.Range("A1")
+                .Name = "PO-Contract" ' Rename the new tab to 'PO-Contract'
+            End With
+            
+            ' Save and close the target workbook
+            targetWb.Save
+            targetWb.Close
+        Else
+            MsgBox "File for " & propertyName & " not found in the specified folder!", vbExclamation
+        End If
+    Next currentProperty
+    
+    MsgBox "Properties have been successfully exported to their respective files!"
+End Sub
