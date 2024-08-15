@@ -10,15 +10,16 @@ Sub ExportPropertiesToExistingFiles()
     Dim folderPath As String
     Dim fileToOpen As String
     Dim targetSheet As Worksheet
+    Dim lastRow As Long
     
     ' Set the folder path where your files are located
-    folderPath = "C:\Your\Directory\Path\"  ' Modify this path to the correct folder
+    folderPath = "E:\AY work\"  ' Modify this path to the correct folder
 
     ' Set the current worksheet
     Set ws = ThisWorkbook.Sheets(1) ' Assuming your data is in the first worksheet
 
     ' Loop through properties 16 to 30
-    For currentProperty = 16 To 30
+    For currentProperty = 16 To 16
         ' Construct the property name
         propertyName = "inrot" & currentProperty
         
@@ -26,8 +27,8 @@ Sub ExportPropertiesToExistingFiles()
         startRow = ws.Cells.Find("Property: " & propertyName, LookAt:=xlWhole).Row
         endRow = ws.Cells.Find("Total (" & propertyName & ")", LookAt:=xlWhole).Row
         
-        ' Define the range to copy
-        Set rng = ws.Rows(startRow & ":" & endRow)
+        ' Define the range to copy (Columns A to L)
+        Set rng = ws.Range(ws.Cells(startRow, 1), ws.Cells(endRow, 12)) ' Columns A to L
         
         ' Find the correct file based on the pattern "inrot{property number}*"
         fileToOpen = Dir(folderPath & propertyName & "*")
@@ -46,16 +47,24 @@ Sub ExportPropertiesToExistingFiles()
             On Error GoTo 0
             
             If Not targetSheet Is Nothing Then
-                ' If the "PO-Contract" sheet exists, clear contents in columns A to L
-                targetSheet.Range("A:L").ClearContents
+                ' Determine the last used row in column A to L in "PO-Contract" sheet
+                lastRow = targetSheet.Cells(targetSheet.Rows.Count, "A").End(xlUp).Row
+                
+                ' Clear contents in columns A to L from row 1 to the last used row
+                targetSheet.Range("A1:L" & lastRow).ClearContents
             Else
                 ' If the sheet does not exist, create a new one
                 Set targetSheet = targetWb.Sheets.Add(After:=targetWb.Sheets(targetWb.Sheets.Count))
                 targetSheet.Name = "PO-Contract"
             End If
             
-            ' Copy the new data into the "PO-Contract" sheet starting at cell A1
+            ' Copy the new data into columns A to L of the "PO-Contract" sheet
             rng.Copy Destination:=targetSheet.Range("A1")
+            
+            ' Reapply the sum formula in column N if needed
+            With targetSheet
+                .Range("N1:N" & lastRow).Formula = "=SUM(A1:M1)" ' Adjust this formula to your specific needs
+            End With
             
             ' Save and close the target workbook
             targetWb.Save
