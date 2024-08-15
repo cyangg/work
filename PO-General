@@ -1,0 +1,75 @@
+Sub ExportPropertiesToExistingFiles()
+    Dim ws As Worksheet
+    Dim startRow As Long
+    Dim endRow As Long
+    Dim rng As Range
+    Dim propertyName As String
+    Dim filePath As String
+    Dim targetWb As Workbook
+    Dim currentProperty As Integer
+    Dim folderPath As String
+    Dim fileToOpen As String
+    Dim targetSheet As Worksheet
+    
+    ' Set the folder path where your files are located
+    folderPath = "E:\AY work\"  ' Modify this path to the correct folder
+
+    ' Set the current worksheet
+    Set ws = ThisWorkbook.Sheets(1) ' Assuming your data is in the first worksheet
+
+    ' Loop through properties 16 to 30
+    For currentProperty = 23 To 23
+        ' Construct the property name
+        propertyName = "inrot" & currentProperty
+        
+        ' Initialize start and end rows
+        startRow = 0
+        endRow = 0
+        
+        ' Attempt to find the start and end rows for the current property data
+        On Error Resume Next
+        startRow = ws.Cells.Find("Property: " & propertyName, LookAt:=xlWhole).Row
+        endRow = ws.Cells.Find("Total (" & propertyName & ")", LookAt:=xlWhole).Row
+        On Error GoTo 0
+        
+        ' Find the correct file based on the pattern "inrot{property number}*"
+        fileToOpen = Dir(folderPath & propertyName & "*")
+        
+        ' Construct the full file path
+        filePath = folderPath & fileToOpen
+        
+        ' Check if the file exists
+        If fileToOpen <> "" Then
+            ' Open the target workbook
+            Set targetWb = Workbooks.Open(filePath)
+            
+            ' Check if the "PO-General" sheet already exists
+            On Error Resume Next
+            Set targetSheet = targetWb.Sheets("PO-General")
+            On Error GoTo 0
+            
+            If Not targetSheet Is Nothing Then
+                ' If the "PO-General" sheet exists, clear contents in columns A to J
+                targetSheet.Range("A:J").ClearContents
+            Else
+                ' If the sheet does not exist, create a new one
+                Set targetSheet = targetWb.Sheets.Add(After:=targetWb.Sheets(targetWb.Sheets.Count))
+                targetSheet.Name = "PO-General"
+            End If
+            
+            ' If start and end rows are found, copy the data into columns A to L of the "PO-Contract" sheet
+            If startRow > 0 And endRow > 0 Then
+                Set rng = ws.Range(ws.Cells(startRow, 1), ws.Cells(endRow, 10)) ' Columns A to J
+                rng.Copy Destination:=targetSheet.Range("A1")
+            End If
+            
+            ' Save and close the target workbook
+            targetWb.Save
+            targetWb.Close
+        Else
+            MsgBox "File for " & propertyName & " not found in the specified folder!", vbExclamation
+        End If
+    Next currentProperty
+    
+    MsgBox "Process completed!"
+End Sub
